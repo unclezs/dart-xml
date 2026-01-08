@@ -24,12 +24,22 @@ class XmlDocument extends XmlNode with XmlHasChildren<XmlNode> {
   ///
   /// Note: It is the responsibility of the caller to provide a standard Dart
   /// [String] using the default UTF-16 encoding.
-  factory XmlDocument.parse(String input, {XmlEntityMapping? entityMapping}) {
+  ///
+  /// If [skipDuplicateDeclarations] is `true`, duplicate XML declarations will
+  /// be silently skipped instead of throwing an error.
+  factory XmlDocument.parse(
+    String input, {
+    XmlEntityMapping? entityMapping,
+    bool skipDuplicateDeclarations = false,
+    bool validateDocument = true,
+    bool validateNesting = true,
+  }) {
     final events = parseEvents(
       input,
       entityMapping: entityMapping,
-      validateNesting: true,
-      validateDocument: true,
+      validateNesting: validateNesting,
+      validateDocument: validateDocument,
+      skipDuplicateDeclarations: skipDuplicateDeclarations,
     );
     return XmlDocument(const XmlNodeDecoder().convertIterable(events));
   }

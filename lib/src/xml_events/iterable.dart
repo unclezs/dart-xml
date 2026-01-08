@@ -12,6 +12,7 @@ class XmlEventIterable extends Iterable<XmlEvent> {
     required this.withBuffer,
     required this.withLocation,
     required this.withParent,
+    this.skipDuplicateDeclarations = false,
   });
 
   final String input;
@@ -21,6 +22,7 @@ class XmlEventIterable extends Iterable<XmlEvent> {
   final bool withBuffer;
   final bool withLocation;
   final bool withParent;
+  final bool skipDuplicateDeclarations;
 
   @override
   Iterator<XmlEvent> get iterator => XmlEventIterator(
@@ -32,6 +34,7 @@ class XmlEventIterable extends Iterable<XmlEvent> {
       withBuffer: withBuffer,
       withLocation: withLocation,
       withParent: withParent,
+      skipDuplicateDeclarations: skipDuplicateDeclarations,
     ),
   );
 }

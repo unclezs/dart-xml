@@ -89,6 +89,7 @@ Iterable<XmlEvent> parseEvents(
   bool withBuffer = false,
   bool withLocation = false,
   bool withParent = false,
+  bool skipDuplicateDeclarations = false,
 }) => XmlEventIterable(
   input,
   entityMapping: entityMapping ?? defaultEntityMapping,
@@ -97,4 +98,5 @@ Iterable<XmlEvent> parseEvents(
   withBuffer: withBuffer,
   withLocation: withLocation,
   withParent: withParent,
+  skipDuplicateDeclarations: skipDuplicateDeclarations,
 );
