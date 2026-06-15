@@ -29,6 +29,19 @@ void main() {
       '<element/>',
     );
   });
+  test('quoted attribute with unquoted fragment', () {
+    final document = XmlDocument.parse(
+      '<content src="Text/Section5.html"#sigil_toc_id_1/>',
+    );
+    expect(
+      document.rootElement.getAttribute('src'),
+      'Text/Section5.html#sigil_toc_id_1',
+    );
+    expect(
+      document.toXmlString(),
+      '<content src="Text/Section5.html#sigil_toc_id_1"/>',
+    );
+  });
   test('comments and whitespace', () {
     final node = XmlDocument.parse(
       '<?xml version="1.0" encoding="UTF-8"?> '

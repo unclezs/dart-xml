@@ -160,6 +160,20 @@ void main() {
       expect(event, other);
       expect(event.hashCode, other.hashCode);
     });
+    test('start element (quoted attribute with unquoted fragment)', () {
+      final iterator = parseEvents(
+        '<content src="Text/Section5.html"#sigil_toc_id_1/>',
+      ).iterator;
+      expect(iterator.moveNext(), isTrue);
+      final event = iterator.current as XmlStartElementEvent;
+      assertComplete(iterator);
+      expect(event.name, 'content');
+      expect(event.attributes, hasLength(1));
+      expect(event.attributes[0].name, 'src');
+      expect(event.attributes[0].value, 'Text/Section5.html#sigil_toc_id_1');
+      expect(event.attributes[0].attributeType, XmlAttributeType.DOUBLE_QUOTE);
+      expect(event.isSelfClosing, isTrue);
+    });
     test('text', () {
       final iterator = parseEvents('Hello World!').iterator;
       expect(iterator.moveNext(), isTrue);

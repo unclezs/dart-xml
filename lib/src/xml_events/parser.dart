@@ -76,11 +76,17 @@ class XmlEventParser {
         ref0(spaceOptional),
         XmlToken.equals.toParser(),
         ref0(spaceOptional),
-        ref0(attributeValue),
+        ref0(attributeValueWithFragmentSuffix),
       ).map4((_, _, _, value) => value).optionalWith(const (
         '',
         XmlAttributeType.DOUBLE_QUOTE,
       ));
+
+  Parser<(String, XmlAttributeType)> attributeValueWithFragmentSuffix() => [
+    ref0(attributeValueDoubleQuoteWithFragmentSuffix),
+    ref0(attributeValueSingleQuoteWithFragmentSuffix),
+    ref0(attributeValueNoQuote),
+  ].toChoiceParser();
 
   Parser<(String, XmlAttributeType)> attributeValue() => [
     ref0(attributeValueDoubleQuote),
@@ -94,11 +100,29 @@ class XmlEventParser {
     XmlToken.doubleQuote.toParser(),
   ).map3((_, value, _) => (value, XmlAttributeType.DOUBLE_QUOTE));
 
+  Parser<(String, XmlAttributeType)>
+  attributeValueDoubleQuoteWithFragmentSuffix() => seq2(
+    ref0(attributeValueDoubleQuote),
+    ref0(attributeValueFragmentSuffix).optionalWith(''),
+  ).map2((attribute, suffix) => ('${attribute.$1}$suffix', attribute.$2));
+
   Parser<(String, XmlAttributeType)> attributeValueSingleQuote() => seq3(
     XmlToken.singleQuote.toParser(),
     XmlCharacterDataParser(XmlToken.singleQuote, 0),
     XmlToken.singleQuote.toParser(),
   ).map3((_, value, _) => (value, XmlAttributeType.SINGLE_QUOTE));
+
+  Parser<(String, XmlAttributeType)>
+  attributeValueSingleQuoteWithFragmentSuffix() => seq2(
+    ref0(attributeValueSingleQuote),
+    ref0(attributeValueFragmentSuffix).optionalWith(''),
+  ).map2((attribute, suffix) => ('${attribute.$1}$suffix', attribute.$2));
+
+  // Some EPUB/NCX generators emit URL fragments outside the quoted src value.
+  Parser<String> attributeValueFragmentSuffix() => seq2(
+    '#'.toParser(),
+    pattern("^ \t\r\n/><?\"'", unicode: true).plusString(),
+  ).flatten(message: 'attribute fragment expected');
 
   Parser<(String, XmlAttributeType)> attributeValueNoQuote() =>
       ref0(nameToken).map((value) => (value, XmlAttributeType.DOUBLE_QUOTE));
