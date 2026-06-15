@@ -2,6 +2,7 @@ import '../enums/node_type.dart';
 import '../mixins/has_attributes.dart';
 import '../mixins/has_children.dart';
 import '../mixins/has_name.dart';
+import '../mixins/has_namespaces.dart';
 import '../mixins/has_parent.dart';
 import '../utils/name.dart';
 import '../visitors/visitor.dart';
@@ -13,6 +14,7 @@ class XmlElement extends XmlNode
     with
         XmlHasName,
         XmlHasParent<XmlNode>,
+        XmlHasNamespaces,
         XmlHasAttributes,
         XmlHasChildren<XmlNode> {
   /// Creates an element node with the provided [name], [attributes], and
@@ -23,7 +25,6 @@ class XmlElement extends XmlNode
     Iterable<XmlNode> children = const [],
     this.isSelfClosing = true,
   ]) {
-    name.attachParent(this);
     this.attributes.initialize(this, attributeNodeTypes);
     this.attributes.addAll(attributes);
     this.children.initialize(this, childrenNodeTypes);
@@ -34,11 +35,12 @@ class XmlElement extends XmlNode
   /// [attributes] and [children].
   XmlElement.tag(
     String qualifiedName, {
+    String? namespaceUri,
     Iterable<XmlAttribute> attributes = const [],
     Iterable<XmlNode> children = const [],
     bool isSelfClosing = true,
   }) : this(
-         XmlName.fromString(qualifiedName),
+         XmlName.qualified(qualifiedName, namespaceUri: namespaceUri),
          attributes,
          children,
          isSelfClosing,
@@ -55,7 +57,7 @@ class XmlElement extends XmlNode
 
   @override
   XmlElement copy() => XmlElement(
-    name.copy(),
+    name,
     attributes.map((each) => each.copy()),
     children.map((each) => each.copy()),
     isSelfClosing,

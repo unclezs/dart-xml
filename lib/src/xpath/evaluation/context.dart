@@ -1,48 +1,72 @@
-import '../../xml/nodes/node.dart';
-import 'functions.dart';
-import 'values.dart';
+import 'package:meta/meta.dart';
+import '../exceptions/evaluation_exception.dart';
+import '../grammars/parser.dart';
+import '../values/sequence.dart';
+import 'configuration.dart';
 
-/// Runtime execution context to evaluate XPath expressions.
+/// Dynamic execution context to evaluate XPath expressions.
 class XPathContext {
+  /// Creates a dynamic execution context.
+  @internal
   XPathContext(
-    this.node, {
+    this.configuration,
+    this.item, {
     this.position = 1,
     this.last = 1,
     this.variables = const {},
-    this.functions = const {},
+    this.parentContext,
   });
 
-  /// Mutable context node.
-  XmlNode node;
+  /// Configuraiton associated with the context.
+  final XPathConfiguration configuration;
+
+  /// Mutable context item.
+  Object item;
 
   /// Mutable context position.
-  int position = 1;
+  int position;
 
   /// Mutable context size.
-  int last = 1;
+  int last;
 
-  /// The current node as an [XPathValue].
-  XPathValue get value => XPathNodeSet.single(node);
+  /// Variables defined in this scope.
+  final Map<String, Object> variables;
+
+  /// Parent context used for variable lookup.
+  final XPathContext? parentContext;
 
   /// Looks up an XPath variable with the given [name].
-  XPathValue? getVariable(String name) => variables[name];
+  Object getVariable(String name) {
+    // Find the variable in the context chain.
+    XPathContext? context = this;
+    while (context != null) {
+      final variable = context.variables[name];
+      if (variable != null) return variable;
+      context = context.parentContext;
+    }
+    // If not found, check the static context.
+    final variable = configuration.variables[name];
+    if (variable != null) return variable;
+    // If still not found, throw an exception.
+    throw XPathEvaluationException('Unknown variable: $name');
+  }
 
-  /// Looks up a XPath function with the given [name].
-  XPathFunction? getFunction(String name) =>
-      functions[name] ?? standardFunctions[name];
+  /// Evaluates the given XPath [expression].
+  XPathSequence evaluate(String expression) =>
+      parseExpression(expression)(this);
 
-  /// User-defined variables.
-  final Map<String, XPathValue> variables;
-
-  /// User-defined functions.
-  final Map<String, XPathFunction> functions;
-
-  /// Creates a copy of the current context.
-  XPathContext copy() => XPathContext(
-    node,
-    position: position,
-    last: last,
-    variables: variables,
-    functions: functions,
+  /// Creates a modified copy of this context.
+  XPathContext copy({
+    Object? item,
+    int? position,
+    int? last,
+    Map<String, Object>? variables,
+  }) => XPathContext(
+    configuration,
+    item ?? this.item,
+    position: position ?? this.position,
+    last: last ?? this.last,
+    variables: variables ?? this.variables,
+    parentContext: this,
   );
 }

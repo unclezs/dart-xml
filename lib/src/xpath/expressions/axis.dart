@@ -1,5 +1,4 @@
 import 'package:meta/meta.dart';
-
 import '../../xml/enums/node_type.dart';
 import '../../xml/extensions/ancestors.dart';
 import '../../xml/extensions/descendants.dart';
@@ -53,8 +52,9 @@ class DescendantAxis implements Axis {
   const DescendantAxis();
 
   @override
-  Iterable<XmlNode> find(XmlNode node) =>
-      node.descendants.where((each) => each.nodeType != XmlNodeType.ATTRIBUTE);
+  Iterable<XmlNode> find(XmlNode node) => node.descendants.where(
+    (XmlNode each) => each.nodeType != XmlNodeType.ATTRIBUTE,
+  );
 }
 
 class DescendantOrSelfAxis implements Axis {
@@ -62,7 +62,9 @@ class DescendantOrSelfAxis implements Axis {
 
   @override
   Iterable<XmlNode> find(XmlNode node) => [node].followedBy(
-    node.descendants.where((each) => each.nodeType != XmlNodeType.ATTRIBUTE),
+    node.descendants.where(
+      (XmlNode each) => each.nodeType != XmlNodeType.ATTRIBUTE,
+    ),
   );
 }
 
@@ -70,8 +72,9 @@ class FollowingAxis implements Axis {
   const FollowingAxis();
 
   @override
-  Iterable<XmlNode> find(XmlNode node) =>
-      node.following.where((each) => each.nodeType != XmlNodeType.ATTRIBUTE);
+  Iterable<XmlNode> find(XmlNode node) => node.following.where(
+    (XmlNode each) => each.nodeType != XmlNodeType.ATTRIBUTE,
+  );
 }
 
 class FollowingSiblingAxis implements Axis {
@@ -83,6 +86,13 @@ class FollowingSiblingAxis implements Axis {
     final index = siblings.indexOf(node);
     return siblings.getRange(index + 1, siblings.length);
   }
+}
+
+class NamespaceAxis implements Axis {
+  const NamespaceAxis();
+
+  @override
+  Iterable<XmlNode> find(XmlNode node) => node.namespaces;
 }
 
 class ParentAxis implements Axis, ReverseAxis {
@@ -102,7 +112,7 @@ class PrecedingAxis implements Axis, ReverseAxis {
   Iterable<XmlNode> find(XmlNode node) {
     final ancestors = node.ancestors.toSet();
     return node.preceding.where(
-      (each) =>
+      (XmlNode each) =>
           !ancestors.contains(each) && each.nodeType != XmlNodeType.ATTRIBUTE,
     );
   }

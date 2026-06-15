@@ -2,7 +2,7 @@
 /// building XML documents.
 library;
 
-export 'src/xml/builder.dart' show XmlBuilder;
+export 'src/xml/builder/builder.dart' show XmlBuilder;
 export 'src/xml/entities/default_mapping.dart'
     show XmlDefaultEntityMapping, defaultEntityMapping;
 export 'src/xml/entities/entity_mapping.dart' show XmlEntityMapping;
@@ -11,12 +11,14 @@ export 'src/xml/enums/attribute_type.dart' show XmlAttributeType;
 export 'src/xml/enums/node_type.dart' show XmlNodeType;
 export 'src/xml/exceptions/exception.dart' show XmlException;
 export 'src/xml/exceptions/format_exception.dart' show XmlFormatException;
+export 'src/xml/exceptions/namespace_exception.dart' show XmlNamespaceException;
 export 'src/xml/exceptions/parent_exception.dart' show XmlParentException;
 export 'src/xml/exceptions/parser_exception.dart' show XmlParserException;
 export 'src/xml/exceptions/tag_exception.dart' show XmlTagException;
 export 'src/xml/exceptions/type_exception.dart' show XmlNodeTypeException;
 export 'src/xml/extensions/ancestors.dart' show XmlAncestorsExtension;
-export 'src/xml/extensions/comparison.dart' show XmlComparisonExtension;
+export 'src/xml/extensions/comparison.dart'
+    show XmlComparisonExtension, XmlDocumentPosition;
 export 'src/xml/extensions/descendants.dart' show XmlDescendantsExtension;
 export 'src/xml/extensions/find.dart' show XmlFindExtension;
 export 'src/xml/extensions/following.dart' show XmlFollowingExtension;
@@ -29,6 +31,7 @@ export 'src/xml/extensions/string.dart' show XmlStringExtension;
 export 'src/xml/mixins/has_attributes.dart' show XmlHasAttributes;
 export 'src/xml/mixins/has_children.dart' show XmlHasChildren;
 export 'src/xml/mixins/has_name.dart' show XmlHasName;
+export 'src/xml/mixins/has_namespaces.dart' show XmlHasNamespaces;
 export 'src/xml/mixins/has_parent.dart' show XmlHasParent;
 export 'src/xml/mixins/has_visitor.dart' show XmlHasVisitor;
 export 'src/xml/mixins/has_writer.dart' show XmlHasWriter;
@@ -40,6 +43,7 @@ export 'src/xml/nodes/doctype.dart' show XmlDoctype;
 export 'src/xml/nodes/document.dart' show XmlDocument;
 export 'src/xml/nodes/document_fragment.dart' show XmlDocumentFragment;
 export 'src/xml/nodes/element.dart' show XmlElement;
+export 'src/xml/nodes/namespace.dart' show XmlNamespace;
 export 'src/xml/nodes/node.dart' show XmlNode;
 export 'src/xml/nodes/processing.dart' show XmlProcessing;
 export 'src/xml/nodes/text.dart' show XmlText;

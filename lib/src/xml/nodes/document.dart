@@ -1,5 +1,5 @@
 import '../../../xml_events.dart' show XmlNodeDecoder, XmlNodeType, parseEvents;
-import '../builder.dart';
+import '../builder/builder.dart';
 import '../entities/entity_mapping.dart';
 import '../exceptions/parser_exception.dart';
 import '../exceptions/tag_exception.dart';
@@ -40,6 +40,7 @@ class XmlDocument extends XmlNode with XmlHasChildren<XmlNode> {
       validateNesting: validateNesting,
       validateDocument: validateDocument,
       skipDuplicateDeclarations: skipDuplicateDeclarations,
+      withNamespace: true,
     );
     return XmlDocument(const XmlNodeDecoder().convertIterable(events));
   }
@@ -76,7 +77,7 @@ class XmlDocument extends XmlNode with XmlHasChildren<XmlNode> {
   /// ```dart
   /// var xml = '<?xml version="1.0">'
   ///           '<shelf></shelf>';
-  /// print(XmlDocument.parse(xml).doctypeElement);
+  /// print(XmlDocument.parse(xml).declaration);
   /// ```
   XmlDeclaration? get declaration {
     for (final node in children) {

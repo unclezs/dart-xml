@@ -1,9 +1,8 @@
 import 'package:meta/meta.dart';
-
-import '../../xml/nodes/node.dart';
 import '../evaluation/context.dart';
 import '../evaluation/expression.dart';
-import '../evaluation/values.dart';
+import '../types/number.dart';
+import '../values/sequence.dart';
 
 @immutable
 class Predicate {
@@ -13,9 +12,8 @@ class Predicate {
 
   bool matches(XPathContext context) {
     final value = expression(context);
-    return value is XPathNumber
-        ? context.position == value.number.round()
-        : value.boolean;
+    final item = value.singleOrNull;
+    return item is num ? xsInteger.cast(item) == context.position : value.ebv;
   }
 }
 
@@ -26,18 +24,19 @@ class PredicateExpression implements XPathExpression {
   final Predicate predicate;
 
   @override
-  XPathValue call(XPathContext context) {
-    final nodes = expression(context).nodes;
+  XPathSequence call(XPathContext context) {
+    final items = expression(context).toList();
     final inner = context.copy();
-    inner.last = nodes.length;
-    final matched = <XmlNode>[];
-    for (var i = 0; i < nodes.length; i++) {
-      inner.node = nodes[i];
+    inner.last = items.length;
+    final matched = <Object>[];
+    for (var i = 0; i < items.length; i++) {
+      final item = items[i];
+      inner.item = item;
       inner.position = i + 1;
       if (predicate.matches(inner)) {
-        matched.add(inner.node);
+        matched.add(item);
       }
     }
-    return XPathNodeSet(matched);
+    return XPathSequence(matched);
   }
 }

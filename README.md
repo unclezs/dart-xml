@@ -10,9 +10,9 @@
 
 Dart XML is a lightweight library for parsing, traversing, querying, transforming and building XML documents.
 
-This library provides a [DOM-based](#Reading-and-Writing) object model for accessing and manipulating XML documents, as
-well as an [event-based](#Event-driven) (comparable to SAX) for incremental reading and processing of XML streams.
-Furthermore, it supports a large subset of [XPath](#XPath) to simplify the querying of large documents.
+This library provides a [DOM-based](#reading-and-writing) object model for accessing and manipulating XML documents, as
+well as an [event-based](#event-driven) (comparable to SAX) for incremental reading and processing of XML streams.
+Furthermore, it supports querying the DOM using [XPath 3.1](#xpath) to simplify the querying of large documents.
 
 This library is open source, stable and well tested. Development happens
 on [GitHub](https://github.com/renggli/dart-xml). Feel free to report issues or create a pull-request there. General
@@ -80,7 +80,7 @@ Accessors allow accessing nodes in the XML tree:
 - `attributes` returns the attributes of the node.
 - `children` returns the direct children of the node.
 
-Both lists are mutable and support all common `List` methods, such as `add(XmlNode)`, `addAll(Iterable<XmlNode>)`, `insert(int, XmlNode)`, and `insertAll(int, Iterable<XmlNode>)`. Trying to add a `null` value or an unsupported node type throws an `XmlNodeTypeError` error. Nodes that are already part of a tree _are not_ automatically moved, you need to first create a copy as otherwise an `XmlParentError` is thrown. `XmlDocumentFragment` nodes are automatically expanded and copies of their children are added.
+Both lists are mutable and support all common `List` methods, such as `add(XmlNode)`, `addAll(Iterable<XmlNode>)`, `insert(int, XmlNode)`, and `insertAll(int, Iterable<XmlNode>)`. Trying to add a `null` value or an unsupported node type throws an `XmlNodeTypeException` error. Nodes that are already part of a tree _are_ automatically moved from their previous parent to the new location. `XmlDocumentFragment` nodes are automatically expanded and their children are added to the list.
 
 There are methods to traverse the XML tree along different axes:
 
@@ -142,9 +142,7 @@ in the bookshelf.
 
 #### XPath
 
-To simplify accessing and extracting specific parts of a DOM document, this library supports the most commonly used
-subset of [XPath 1.0](https://www.w3.org/TR/1999/REC-xpath-19991116/) expressions; a full XPath engine is outside the
-scope of this library.
+To simplify accessing and extracting specific parts of a DOM document, this library supports [XPath 3.1](https://www.w3.org/TR/xpath-31/) expressions.
 
 To get started import the XPath library:
 
@@ -209,7 +207,7 @@ The `element` method supports optional named arguments:
 
 - The most common is the `nest:` argument which is used to insert contents into the element. In most cases this will be a function that calls more methods on the builder to define attributes, declare namespaces and add child elements. However, the argument can also be a string or an arbitrary Dart object that is converted to a string and added as a text node.
 - While attributes can be defined from within the element, for simplicity there is also an argument `attributes:` that takes a map to define simple name-value pairs.
-- Furthermore, we can provide a URI as the namespace of the element using `namespace:` and declare new namespace prefixes using `namespaces:`. For details see the documentation of the method.
+- Furthermore, we can provide a URI as the namespace of the element using `namespaceUri:` and declare new namespace prefixes using `namespaceUris:`. For details see the documentation of the method.
 
 The builder pattern allows you to easily extract repeated parts into specific methods. In the example above, one could put the part writing a book into a separate method as follows:
 
@@ -254,7 +252,7 @@ parseEvents(bookshelfXml)
     .forEach(print);
 ```
 
-The function `parseEvents` supports various other options, see [its documentation](https://pub.dev/documentation/xml/latest/xml_events/parseEvents.html) for further examples.
+The function `parseEvents` supports various other options, see [the documentation](https://pub.dev/documentation/xml/latest/xml_events/parseEvents.html) for further examples.
 
 This approach requires the whole input to be available at the beginning and does not work if the data itself is only available asynchronous, such as coming from a slow network connection. A more flexible, but also more complicated API is provided with [Dart Streams](https://dart.dev/tutorials/language/streams).
 
@@ -268,12 +266,12 @@ For more control the underlying `Codec` and `Converter` implementations can be u
 
 ![Stream Codec and Converter](https://raw.githubusercontent.com/renggli/dart-xml/HEAD/doc/stream-codec.png)
 
-Various other transformations are provided to simplify processing complex streams:
+`Stream<String>.toXmlEvents()`, `XmlEventDecoder()`, and `XmlEventCodec()` are highly configurable in how they process and validate the input, see [the documentation](https://pub.dev/documentation/xml/latest/xml_events/XmlEventDecoder/XmlEventDecoder.html) for more information.
+
+Various more ad-hoc transformations are provided to simplify processing complex streams:
 
 - Normalizes a sequence of `XmlEvent` objects by removing empty and combining adjacent text events. \
   `Stream<List<XmlEvent>> normalizeEvents()` on `Stream<List<XmlEvent>>`
-- Annotates `XmlEvent` objects with their parent events that is thereafter accessible through `XmlParented.parentEvent`. Validates the nesting and throws an exception if it is invalid. \
-  `Stream<List<XmlEvent>> withParentEvents()` on `Stream<List<XmlEvent>>`
 - From a sequence of `XmlEvent` objects filter the event sequences that form sub-trees for which a predicate returns `true`. \
   `Stream<List<XmlEvent>> selectSubtreeEvents(Predicate<XmlStartElementEvent>)` on `Stream<List<XmlEvent>>`
 - Flattens a chunked stream of objects to a stream of objects. \
@@ -310,13 +308,12 @@ await file.openRead()
     .forEach((node) => print(node.innerText));
 ```
 
-A common challenge when processing XML event streams is the lack of hierarchical information, thus it is very hard to figure out parent dependencies such as looking up a namespace URI. The `.withParentEvents()` transformation validates the hierarchy and annotates the events with their parent event. This enables features (such as `parentEvent` and the `namespaceUri` accessor) and makes mapping and selecting events considerably simpler. For example:
+A common challenge when processing XML event streams is the lack of hierarchical information, thus it is hard to figure out parent dependencies such as looking up a namespace URI. Enabling `withParent: true` and `withNamespace: true` when decoding the stream validates the hierarchy and annotates the events with their parent event. This enables features (such as `parentEvent` and the `namespaceUri` accessor) and makes mapping and selecting events considerably simpler. For example:
 
 ```dart
 await Stream.fromIterable([shiporderXsd])
-    .toXmlEvents()
+    .toXmlEvents(withNamespace: true, withParent: true)
     .normalizeEvents()
-    .withParentEvents()
     .selectSubtreeEvents((event) =>
         event.localName == 'element' &&
         event.namespaceUri == 'http://www.w3.org/2001/XMLSchema')
@@ -339,21 +336,23 @@ Furthermore, there are [numerous packages](https://pub.dev/packages?q=dependency
 - ☑ Reading documents using an event based API (SAX).
 - ☑ Decodes and encodes commonly used character entities.
 - ☑ Querying, traversing, and mutating API using Dart principles.
-- ☑ Querying the DOM using a subset of XPath.
+- ☑ Querying the DOM using XPath 3.1.
 - ☑ Building XML trees using a builder API.
+- ☑ Validates namespace declarations.
 
 ### Limitations
 
-- ☐ Doesn't validate namespace declarations.
 - ☐ Doesn't validate schema declarations.
 - ☐ Doesn't parse, apply or enforce the DTD.
 - ☐ Doesn't support XSL or XSLT.
+- ☐ Doesn't support XQuery.
 
 ### Standards
 
 - [Extensible Markup Language (XML) 1.0](https://www.w3.org/TR/xml/)
 - [Namespaces in XML 1.0](https://www.w3.org/TR/xml-names/)
-- [XPath 1.0](https://www.w3.org/TR/1999/REC-xpath-19991116/)
+- [XPath 3.1 Language](https://www.w3.org/TR/xpath-31/)
+- [XPath Functions and Operators 3.1](https://www.w3.org/TR/xpath-functions-31/)
 - [W3C DOM4](https://www.w3.org/TR/domcore/)
 
 ### History

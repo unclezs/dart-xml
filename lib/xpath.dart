@@ -1,65 +1,61 @@
-/// Dart XPath adds support of XPath 1.0 expressions to the XML library.
+/// Dart XPath adds support of XPath 3.1 expressions to the XML library.
 library;
 
 import 'package:meta/meta.dart' show experimental;
-import 'package:petitparser/core.dart' show Failure;
 
 import 'src/xml/nodes/node.dart';
-import 'src/xml/utils/cache.dart';
-import 'src/xpath/evaluation/context.dart';
-import 'src/xpath/evaluation/expression.dart';
-import 'src/xpath/evaluation/functions.dart';
-import 'src/xpath/evaluation/values.dart';
-import 'src/xpath/exceptions/parser_exception.dart';
-import 'src/xpath/parser.dart';
+import 'src/xml/utils/name.dart';
+import 'src/xpath/evaluation/configuration.dart';
+import 'src/xpath/values/function.dart';
+import 'src/xpath/values/sequence.dart';
 
-export 'src/xpath/evaluation/functions.dart' show XPathFunction;
-export 'src/xpath/evaluation/values.dart';
+export 'src/xpath/evaluation/configuration.dart';
 export 'src/xpath/exceptions/evaluation_exception.dart';
 export 'src/xpath/exceptions/parser_exception.dart';
-export 'src/xpath/generator.dart' show XPathGenerator;
+export 'src/xpath/generator.dart';
+export 'src/xpath/values/function.dart'
+    show XPathFunction, XPathWrappedFunctionExtension;
+export 'src/xpath/values/sequence.dart' show XPathSequence;
 
 extension XPathExtension on XmlNode {
   /// Returns an iterable over the nodes matching the provided XPath
   /// [expression].
+  ///
+  /// An optional [configuration] can be provided to customize the evaluation
+  /// context. The returned nodes are a lazy iterable of [XmlNode] instances.
   @experimental
   Iterable<XmlNode> xpath(
     String expression, {
-    Map<String, XPathValue> variables = const {},
-    Map<String, XPathFunction> functions = const {},
+    XPathConfiguration? configuration,
+    @Deprecated('Specify variables in the configuration instead')
+    Map<String, Object>? variables,
+    @Deprecated('Specify functions in the configuration instead')
+    Map<XmlName, XPathFunction>? functions,
   }) => xpathEvaluate(
     expression,
+    configuration: configuration,
     variables: variables,
     functions: functions,
-  ).nodes;
+  ).whereType<XmlNode>();
 
   /// Returns the value resulting from evaluating the given XPath [expression].
   ///
-  /// The returned value is of type [XPathNodeSet], [XPathString], [XPathNumber],
-  /// or [XPathBoolean]. You can fetch the underlying data by calling
-  /// [XPathValue.nodes], [XPathValue.string], [XPathValue.number], or
-  /// [XPathValue.boolean] respectively.
-  /// The [XPathNodeSet] returned by this method is guaranteed to be
-  /// in document order.
+  /// An optional [configuration] can be provided to customize the evaluation
+  /// context. The returned value is of type [XPathSequence], which is a lazy
+  /// iterable of [Object]s.
   @experimental
-  XPathValue xpathEvaluate(
+  XPathSequence xpathEvaluate(
     String expression, {
-    Map<String, XPathValue> variables = const {},
-    Map<String, XPathFunction> functions = const {},
-  }) => _cache[expression](
-    XPathContext(this, variables: variables, functions: functions),
-  );
-}
-
-final _parser = const XPathParser().build();
-final _cache = XmlCache<String, XPathExpression>((expression) {
-  final result = _parser.parse(expression);
-  if (result is Failure) {
-    throw XPathParserException(
-      result.message,
-      buffer: expression,
-      position: result.position,
-    );
+    XPathConfiguration? configuration,
+    @Deprecated('Specify variables in the configuration instead')
+    Map<String, Object>? variables,
+    @Deprecated('Specify functions in the configuration instead')
+    Map<XmlName, XPathFunction>? functions,
+  }) {
+    var config = configuration ?? XPathConfiguration.standard();
+    if (variables != null || functions != null) {
+      config = config.copy(variables: variables, functions: functions);
+    }
+    return config.context(this).evaluate(expression);
   }
-  return result.value;
-}, 25);
+}

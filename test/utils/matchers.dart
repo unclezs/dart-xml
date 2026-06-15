@@ -19,19 +19,34 @@ final isAssertionError = hasAssertionsEnabled()
 
 /// Returns a [Matcher] that asserts on a [XmlNode] with a string serialization
 /// or a structurally equivalent node.
-Matcher isXmlNode(dynamic matcher) => switch (matcher) {
-  String() => isA<XmlNode>().having(
-    (each) => each.outerXml,
-    'outerXml',
-    matcher,
-  ),
-  XmlNode() => isA<XmlNode>().having(
+Matcher isXmlNode<T extends XmlNode>(dynamic matcher) => switch (matcher) {
+  String() => isA<T>().having((each) => each.outerXml, 'outerXml', matcher),
+  XmlNode() => isA<T>().having(
     (each) => each.isEqualNode(matcher),
     'node',
     isTrue,
   ),
   _ => throw ArgumentError.value(matcher, 'matcher', 'Invalid type'),
 };
+
+/// Returns a [Matcher] that assert on a [XmlName].
+Matcher isXmlName({
+  dynamic qualified = isNotEmpty,
+  dynamic prefix = isNull,
+  dynamic local = isNotEmpty,
+  dynamic namespaceUri = isNull,
+  dynamic extendedQualified = isNotEmpty,
+}) => isA<XmlName>()
+    .having((value) => value.qualified, 'qualified', qualified)
+    .having((value) => value.prefix, 'prefix', prefix)
+    .having((value) => value.local, 'local', local)
+    .having((value) => value.namespaceUri, 'namespaceUri', namespaceUri)
+    .having(
+      (value) => value.extendedQualified,
+      'extendedQualified',
+      extendedQualified,
+    )
+    .having((value) => value.toString(), 'toString', qualified);
 
 /// Returns a [Matcher] that assert on a [XmlParentException].
 Matcher isXmlParentException({
@@ -91,6 +106,21 @@ Matcher isXmlTagException({
     .having((value) => value.column, 'column', column)
     .having((value) => value.toString(), 'toString', isNotEmpty);
 
+/// Returns a [Matcher] that assert on a [XmlNamespaceException].
+Matcher isXmlNamespaceException({
+  dynamic message = isNotEmpty,
+  dynamic buffer = anything,
+  dynamic position = anything,
+  dynamic line = anything,
+  dynamic column = anything,
+}) => isA<XmlNamespaceException>()
+    .having((value) => value.message, 'message', message)
+    .having((value) => value.buffer, 'buffer', buffer)
+    .having((value) => value.position, 'position', position)
+    .having((value) => value.line, 'line', line)
+    .having((value) => value.column, 'column', column)
+    .having((value) => value.toString(), 'toString', isNotEmpty);
+
 /// Returns a [Matcher] that assert on a [XPathParserException].
 Matcher isXPathParserException({
   dynamic message = isNotEmpty,
@@ -109,10 +139,11 @@ Matcher isXPathParserException({
     .having((value) => value.toString(), 'toString', isNotEmpty);
 
 /// Returns a [Matcher] that assert on a [XPathEvaluationException].
-Matcher isXPathEvaluationException({
-  dynamic message = isNotEmpty,
-  dynamic name = anything,
-  dynamic args = anything,
-}) => isA<XPathEvaluationException>()
-    .having((value) => value.message, 'message', message)
-    .having((value) => value.toString(), 'toString', isNotEmpty);
+Matcher isXPathEvaluationException({dynamic message = isNotEmpty}) =>
+    isA<XPathEvaluationException>()
+        .having((value) => value.message, 'message', message)
+        .having((value) => value.toString(), 'toString', isNotEmpty);
+
+/// Returns a [Matcher] that asserts on an [XPathSequence].
+Matcher isXPathSequence(dynamic matcher) =>
+    allOf(isA<XPathSequence>(), matcher);
