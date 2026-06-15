@@ -16,6 +16,7 @@ class XmlAnnotator {
     required this.withBuffer,
     required this.withLocation,
     required this.withParent,
+    this.skipDuplicateDeclarations = false,
   });
 
   final bool validateNesting;
@@ -23,6 +24,7 @@ class XmlAnnotator {
   final bool withBuffer;
   final bool withLocation;
   final bool withParent;
+  final bool skipDuplicateDeclarations;
 
   // State to validate parent relationship.
   final List<XmlStartElementEvent> _parents = [];
@@ -32,7 +34,8 @@ class XmlAnnotator {
   var hasDoctype = false;
   var hasElement = false;
 
-  void annotate(XmlEvent event, {String? buffer, int? start, int? stop}) {
+  /// Returns true if the event should be skipped.
+  bool annotate(XmlEvent event, {String? buffer, int? start, int? stop}) {
     // Attach the buffer.
     if (withBuffer) {
       event.attachBuffer(buffer);
@@ -51,12 +54,18 @@ class XmlAnnotator {
         switch (event) {
           case XmlDeclarationEvent():
             if (hasDeclaration) {
+              if (skipDuplicateDeclarations) {
+                return true; // Skip this event
+              }
               throw XmlParserException(
                 'Expected at most one XML declaration',
                 buffer: buffer,
                 position: start,
               );
             } else if (hasDoctype || hasElement) {
+              if (skipDuplicateDeclarations) {
+                return true; // Skip this event
+              }
               throw XmlParserException(
                 'Unexpected XML declaration',
                 buffer: buffer,
@@ -123,6 +132,7 @@ class XmlAnnotator {
           }
       }
     }
+    return false;
   }
 
   void close({String? buffer, int? position}) {

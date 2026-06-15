@@ -31,12 +31,15 @@ class XmlEventIterator implements Iterator<XmlEvent> {
       if (result is Success) {
         _context = result;
         _current = result.value;
-        _annotator.annotate(
+        final skip = _annotator.annotate(
           result.value,
           buffer: context.buffer,
           start: context.position,
           stop: result.position,
         );
+        if (skip) {
+          return moveNext();
+        }
         return true;
       } else if (context.position < context.buffer.length) {
         // In case of an error, skip one character and throw an exception.
