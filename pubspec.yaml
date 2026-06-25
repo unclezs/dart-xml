@@ -14,10 +14,10 @@ topics:
   - builder
 
 environment:
-  sdk: '>=3.10.0 <4.0.0'
+  sdk: '>=3.9.0 <4.0.0'
 dependencies:
   collection: ^1.19.0
-  meta: ^1.17.0
+  meta: ^1.16.0
   petitparser: ^7.0.2
 dev_dependencies:
   args: ^2.7.0
